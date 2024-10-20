@@ -1,5 +1,4 @@
-import sys, getopt, shutil, os, pathlib, os.path
-from os import path
+import os, shutil
 from pathlib import Path
 from PIL import Image
 os.system('clear')
