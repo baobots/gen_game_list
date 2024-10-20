@@ -65,7 +65,7 @@ for gamefile in gamelist:
     #page outfile
     if (itemcount == 0):
         outfile = outfile + '  <icon_page' + str(pagecount) + '>\r\n'
-    outfile = outfile + '      <icon' + str(itemcount) + '_para id="' + console + '" name=\"' + gamename + '\" game_path=\"' + gamename + ".zip" + '\"></icon' + str(itemcount) + '_para>\r\n'
+    outfile = outfile + '      <icon' + str(itemcount) + '_para id="' + console.upper() + '" name=\"' + gamename + '\" game_path=\"' + gamename + ".zip" + '\"/>\r\n'
     if (itemcount == 9 or gamefile == gamelist[-1]):
         outfile = outfile + '  </icon_page' + str(pagecount) + '>\r\n'
         itemcount = -1
