@@ -3,11 +3,11 @@ from os import path
 from pathlib import Path
 from PIL import Image
 os.system('clear')
-shutil.rmtree('tf')
+shutil.rmtree('tf', ignore_errors=True)
 print ('Remove tf folder')
 
 #set vars
-romsfolder = 'batocera/roms'
+romsfolder = 'source/roms'
 console = 'neogeo'
 
 #create folder
@@ -77,6 +77,6 @@ for gamefile in gamelist:
 outfile = outfile + '</strings_resources>'
 
 #save outfile
-print ('Save config\t> tf/settings/res/' + console.upper() + '/string/file.xml')
-with open('tf/settings/res/' + console.upper() + '/string/file.xml', 'w') as text_file:
-    text_file.write(outfile)
+print ('Save config\t> tf/settings/res/' + console.upper() + '/string/game_strings_en.xml')
+with open('tf/settings/res/' + console.upper() + '/string/game_strings_en.xml', 'w') as xmlfile:
+    xmlfile.write(outfile)
