@@ -4,18 +4,23 @@ from PIL import Image
 from urllib.request import urlretrieve
 
 #set vars
-romsfolder = 'source/roms'
+romsfolder = '/home/mseverin/Documents/gen_game_list/source/roms/neogeo'
 console = 'neogeo'
 
 #init folders
-print (f'Remove tf_{console} folder')
+os.system('clear')
+start = input(f'Remove tf_{console} folder? [y/n]')
+print ()
+if start != 'y':
+    print ('Exit')
+    quit()
+print(f'Remove tf_{console} folder')
 shutil.rmtree(f'tf_{console}', ignore_errors=True)
 os.makedirs(f'tf_{console}/game/{console.upper()}')
 os.makedirs(f'tf_{console}/settings/res/{console.upper()}/string')
 os.makedirs(f'tf_{console}/settings/res/{console.upper()}/pic')
 
 #init realnames
-os.system('clear')
 urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
 with open('mamenames.xml') as norootfile:
     rootfile = itertools.chain('<root>', norootfile, '</root>')
@@ -24,7 +29,7 @@ with open('mamenames.xml') as norootfile:
 #generate gamelist
 gamelist = []
 reallist = []
-for gamefile in os.listdir(romsfolder + '/' + console):
+for gamefile in os.listdir(romsfolder):
     if gamefile.endswith('.zip') or gamefile.endswith('.7z'):
         gamelist.append(gamefile)
         gamename = os.path.splitext(gamefile)[0]
@@ -48,16 +53,16 @@ for realname, gamefile in gamedict.items():
     print (f'Magane game\t> {realname}')
     
     #copy file
-    print (f'Copy game\t> {romsfolder}/{console}/{gamefile}')
-    shutil.copy(f'{romsfolder}/{console}/{gamefile}', f'tf_{console}/game/{console.upper()}/')
+    print (f'Copy game\t> {romsfolder}/{gamefile}')
+    shutil.copy(f'{romsfolder}/{gamefile}', f'tf_{console}/game/{console.upper()}/')
 
     #find image
     gamename = os.path.splitext(gamefile)[0]
     picfile = ''
-    for picimg in Path(f'{romsfolder}/{console}').rglob(f'{gamename}-image*'):
+    for picimg in Path(f'{romsfolder}').rglob(f'{gamename}-image*'):
         picfile = str(picimg)
     if not picfile:
-        for picfile in Path(f'{romsfolder}/{console}').rglob(f'{gamename}-thumb*'):
+        for picfile in Path(f'{romsfolder}').rglob(f'{gamename}-thumb*'):
             picfile = str(picfile)
     
     #copy image
