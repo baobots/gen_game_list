@@ -4,14 +4,14 @@ from PIL import Image
 from urllib.request import urlretrieve
 
 #set vars
-romsfolder = '/home/mseverin/Documents/gen_game_list/source/roms/neogeo'
+romsfolder = '/home/mseverin/Downloads/SSD256/Batocera_128GB/SHARE/roms/neogeo/'
 console = 'neogeo'
 
 #init folders
 os.system('clear')
 start = input(f'Remove tf_{console} folder? [y/n]')
-print ()
 if start != 'y':
+    print ()
     print ('Exit')
     quit()
 print(f'Remove tf_{console} folder')
@@ -34,12 +34,18 @@ for gamefile in os.listdir(romsfolder):
         gamelist.append(gamefile)
         gamename = os.path.splitext(gamefile)[0]
         mamenametag = mamenamexml.find(f'.//*[mamename=\'{gamename}\']')
-        reallist.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', mamenametag.find('realname').text))[:28])
+        if mamenametag is not None:
+            reallist.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', mamenametag.find('realname').text))[:28])
+        else:
+            print ()
+            print ('\x1b[0;31;40m' + f'Error: Not found {gamefile} in mamenametag.xml' + '\x1b[0m')
+            quit()
 gamedict = dict(zip(reallist,gamelist))
 gamedict = dict(sorted((key,value) for (key,value) in gamedict.items()))
 gamedictcount = len(gamedict)
 print (f'Found {gamedictcount} games')
 print ()
+input('Press Enter to continue...')
 
 #init outfilexml
 pagecount = 1
@@ -53,8 +59,8 @@ for realname, gamefile in gamedict.items():
     print (f'Magane game\t> {realname}')
     
     #copy file
-    print (f'Copy game\t> {romsfolder}/{gamefile}')
-    shutil.copy(f'{romsfolder}/{gamefile}', f'tf_{console}/game/{console.upper()}/')
+    print (f'Copy game\t> {romsfolder}{gamefile}')
+    shutil.copy(f'{romsfolder}{gamefile}', f'tf_{console}/game/{console.upper()}/')
 
     #find image
     gamename = os.path.splitext(gamefile)[0]
@@ -97,5 +103,7 @@ outfilexml = outfilexml + '</strings_resources>'
 #save outfilexml
 print (f'No image games\t> {picnotfound}')
 print (f'Save config\t> tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml')
+print ()
+print ('All done')
 with open(f'tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml', 'w') as xmlfile:
     xmlfile.write(outfilexml)
