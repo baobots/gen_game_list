@@ -8,11 +8,11 @@ romsfolder = 'source/roms'
 console = 'neogeo'
 
 #init folders
-print ('Remove tf folder')
-shutil.rmtree('tf', ignore_errors=True)
-os.makedirs(f'tf/game/{console.upper()}')
-os.makedirs(f'tf/settings/res/{console.upper()}/string')
-os.makedirs(f'tf/settings/res/{console.upper()}/pic')
+print (f'Remove tf_{console} folder')
+shutil.rmtree(f'tf_{console}', ignore_errors=True)
+os.makedirs(f'tf_{console}/game/{console.upper()}')
+os.makedirs(f'tf_{console}/settings/res/{console.upper()}/string')
+os.makedirs(f'tf_{console}/settings/res/{console.upper()}/pic')
 
 #init realnames
 os.system('clear')
@@ -49,7 +49,7 @@ for realname, gamefile in gamedict.items():
     
     #copy file
     print (f'Copy game\t> {romsfolder}/{console}/{gamefile}')
-    shutil.copy(f'{romsfolder}/{console}/{gamefile}', f'tf/game/{console.upper()}/')
+    shutil.copy(f'{romsfolder}/{console}/{gamefile}', f'tf_{console}/game/{console.upper()}/')
 
     #find image
     gamename = os.path.splitext(gamefile)[0]
@@ -70,10 +70,10 @@ for realname, gamefile in gamedict.items():
         picfile = picfile.replace(".jpg", ".png")
         picjpg.save(picfile)
         print (f'Move image\t> {picfile}')
-        shutil.move(picfile, f'tf/settings/res/{console.upper()}/pic/{gamename}.png')
+        shutil.move(picfile, f'tf_{console}/settings/res/{console.upper()}/pic/{gamename}.png')
     else:
         print (f'Copy image\t> {picfile}')
-        shutil.copy(picfile, f'tf/settings/res/{console.upper()}/pic/{gamename}.png')
+        shutil.copy(picfile, f'tf_{console}/settings/res/{console.upper()}/pic/{gamename}.png')
     print ()
 
     #page outfilexml
@@ -91,6 +91,6 @@ outfilexml = outfilexml + '</strings_resources>'
 
 #save outfilexml
 print (f'No image games\t> {picnotfound}')
-print (f'Save config\t> tf/settings/res/{console.upper()}/string/game_strings_en.xml')
-with open(f'tf/settings/res/{console.upper()}/string/game_strings_en.xml', 'w') as xmlfile:
+print (f'Save config\t> tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml')
+with open(f'tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml', 'w') as xmlfile:
     xmlfile.write(outfilexml)
