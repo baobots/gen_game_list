@@ -4,8 +4,8 @@ from PIL import Image
 from urllib.request import urlretrieve
 
 #set vars
-romsfolder = '/home/mseverin/Downloads/SSD256/Batocera_128GB/SHARE/roms/neogeo/'
-console = 'neogeo'
+romsfolder = '/home/mseverin/Downloads/SSD256/Batocera_128GB/SHARE/roms/fbneo/'
+console = 'fba'
 
 #init folders
 os.system('clear')
@@ -21,7 +21,7 @@ os.makedirs(f'tf_{console}/settings/res/{console.upper()}/string')
 os.makedirs(f'tf_{console}/settings/res/{console.upper()}/pic')
 
 #init realnames
-urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
+#urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
 with open('mamenames.xml') as norootfile:
     rootfile = itertools.chain('<root>', norootfile, '</root>')
     mamenamexml = xml.etree.ElementTree.fromstringlist(rootfile)
@@ -45,7 +45,7 @@ gamedict = dict(sorted((key,value) for (key,value) in gamedict.items()))
 gamedictcount = len(gamedict)
 print (f'Found {gamedictcount} games')
 print ()
-input('Press Enter to continue...')
+input('Press enter to continue...')
 
 #init outfilexml
 pagecount = 1
