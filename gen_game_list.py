@@ -4,8 +4,9 @@ from PIL import Image
 from urllib.request import urlretrieve
 
 #set vars
-romsfolder = '/home/mseverin/Downloads/SSD256/Batocera_128GB/SHARE/roms/fbneo/'
-console = 'fba'
+romsfolder = ''
+imagesfolder = ''
+console = 'neogeo'
 
 #init folders
 os.system('clear')
@@ -15,36 +16,41 @@ if start != 'y':
     print ('Exit')
     quit()
 print(f'Remove tf_{console} folder')
+print ()
 shutil.rmtree(f'tf_{console}', ignore_errors=True)
 os.makedirs(f'tf_{console}/game/{console.upper()}')
 os.makedirs(f'tf_{console}/settings/res/{console.upper()}/string')
 os.makedirs(f'tf_{console}/settings/res/{console.upper()}/pic')
 
-#init realnames
-#urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
-with open('mamenames.xml') as norootfile:
+#init realnames and customnanes
+urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
+with open('mamenames.xml', 'r+') as norootfile:
+    with open('customnames.xml') as customnames:
+        shutil.copyfileobj(customnames, norootfile)
     rootfile = itertools.chain('<root>', norootfile, '</root>')
     mamenamexml = xml.etree.ElementTree.fromstringlist(rootfile)
 
 #generate gamelist
 gamelist = []
 reallist = []
-for gamefile in os.listdir(romsfolder):
-    if gamefile.endswith('.zip') or gamefile.endswith('.7z'):
-        gamelist.append(gamefile)
-        gamename = os.path.splitext(gamefile)[0]
-        mamenametag = mamenamexml.find(f'.//*[mamename=\'{gamename}\']')
-        if mamenametag is not None:
-            reallist.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', mamenametag.find('realname').text))[:28])
+bioslist = []
+for romfile in os.listdir(romsfolder):
+    if romfile.endswith('.zip') or romfile.endswith('.7z'):
+        mamenametag = os.path.splitext(romfile)[0]
+        realnametag = mamenamexml.find(f'.//*[mamename=\'{mamenametag}\']')
+        if realnametag is not None:
+            gamelist.append(romfile)
+            reallist.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', realnametag.find('realname').text))[:28])
         else:
-            print ()
-            print ('\x1b[0;31;40m' + f'Error: Not found {gamefile} in mamenametag.xml' + '\x1b[0m')
-            quit()
+            print (f'Copy bios\t> {romfile}')
+            bioslist.append(romfile)
+            shutil.copy(f'{romsfolder}{romfile}', f'tf_{console}/game/{console.upper()}/')
 gamedict = dict(zip(reallist,gamelist))
 gamedict = dict(sorted((key,value) for (key,value) in gamedict.items()))
 gamedictcount = len(gamedict)
-print (f'Found {gamedictcount} games')
 print ()
+print (f'Copied {len(bioslist)} bios')
+print (f'Found {gamedictcount} games')
 input('Press enter to continue...')
 
 #init outfilexml
@@ -58,17 +64,17 @@ picnotfound = 0
 for realname, gamefile in gamedict.items():
     print (f'Magane game\t> {realname}')
     
-    #copy file
+    #copy game
     print (f'Copy game\t> {romsfolder}{gamefile}')
     shutil.copy(f'{romsfolder}{gamefile}', f'tf_{console}/game/{console.upper()}/')
 
     #find image
     gamename = os.path.splitext(gamefile)[0]
     picfile = ''
-    for picimg in Path(f'{romsfolder}').rglob(f'{gamename}-image*'):
+    for picimg in Path(f'{imagesfolder}').rglob(f'{gamename}-image*'):
         picfile = str(picimg)
     if not picfile:
-        for picfile in Path(f'{romsfolder}').rglob(f'{gamename}-thumb*'):
+        for picfile in Path(f'{imagesfolder}').rglob(f'{gamename}-thumb*'):
             picfile = str(picfile)
     
     #copy image
