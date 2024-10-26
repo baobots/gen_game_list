@@ -8,6 +8,18 @@ romsfolder = ''
 imagesfolder = ''
 console = 'neogeo'
 
+#CPS – Capcom
+#FBA – Final Burn Alpha
+#FC – Famicom / NES
+#GB – Game Boy
+#GBA – Game Boy Advance
+#GBC – Game Boy Color
+#GG – Game Gear
+#MD – Mega Drive
+#NEOGEO
+#PS – Playstation
+#SFC – Super Famicom / SNES
+
 #init folders
 os.system('clear')
 start = input(f'Remove tf_{console} folder? [y/n]')
