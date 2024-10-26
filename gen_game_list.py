@@ -2,23 +2,23 @@ import os, shutil, itertools, xml.etree.ElementTree, re
 from pathlib import Path
 from PIL import Image
 from urllib.request import urlretrieve
-
+'''
 #set vars
 romsfolder = ''
 imagesfolder = ''
 console = 'neogeo'
 
-#CPS – Capcom
-#FBA – Final Burn Alpha
-#FC – Famicom / NES
-#GB – Game Boy
-#GBA – Game Boy Advance
-#GBC – Game Boy Color
-#GG – Game Gear
-#MD – Mega Drive
-#NEOGEO
-#PS – Playstation
-#SFC – Super Famicom / SNES
+# CPS – Capcom
+# FBA – Final Burn Alpha
+# FC – Famicom / NES
+# GB – Game Boy
+# GBA – Game Boy Advance
+# GBC – Game Boy Color
+# GG – Game Gear
+# MD – Mega Drive
+# NEOGEO
+# PS – Playstation
+# SFC – Super Famicom / SNES
 
 #init folders
 os.system('clear')
@@ -36,11 +36,11 @@ os.makedirs(f'tf_{console}/settings/res/{console.upper()}/pic')
 
 #init realnames and customnanes
 urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
-with open('mamenames.xml', 'r+') as norootfile:
+with open('mamenames.xml', 'r+') as xmltree:
     with open('customnames.xml') as customnames:
-        shutil.copyfileobj(customnames, norootfile)
-    rootfile = itertools.chain('<root>', norootfile, '</root>')
-    mamenamexml = xml.etree.ElementTree.fromstringlist(rootfile)
+        shutil.copyfileobj(customnames, xmltree)
+    xmltree = itertools.chain('<root>', xmltree, '</root>')
+    mamenamexml = xml.etree.ElementTree.fromstringlist(xmltree)
 
 #generate gamelist
 gamelist = []
@@ -106,11 +106,11 @@ for realname, gamefile in gamedict.items():
     print ()
 
     #page outfilexml
-    if (itemcount == 0):
-        outfilexml = outfilexml + f'  <icon_page{str(pagecount)}>\r\n'
+    if itemcount == 0:
+        outfilexml = outfilexml + f'  <icon_page{pagecount}>\r\n'
     outfilexml = outfilexml + f'      <icon{str(itemcount)}_para id="{console.upper()}" name="{realname}" game_path="{gamename}.zip"/>\r\n'
-    if (itemcount == 9 or realname == list(gamedict)[-1]):
-        outfilexml = outfilexml + f'  </icon_page{str(pagecount)}>\r\n'
+    if itemcount == 9 or realname == list(gamedict)[-1]:
+        outfilexml = outfilexml + f'  </icon_page{pagecount}>\r\n'
         itemcount = -1
         pagecount +=1
     itemcount +=1
@@ -122,6 +122,54 @@ outfilexml = outfilexml + '</strings_resources>'
 print (f'No image games\t> {picnotfound}')
 print (f'Save config\t> tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml')
 print ()
-print ('All done')
+print (f'Console {console} are done')
 with open(f'tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml', 'w') as xmlfile:
     xmlfile.write(outfilexml)
+'''
+#create xml fot all game
+shutil.rmtree('tf_all', ignore_errors=True)
+os.makedirs('tf_all/settings/res/ALL/string/')
+
+#get game from xml
+xmlfile = ''
+gamelist = []
+for xmlfile in Path('./').rglob('*strings*.xml'):
+    with open(xmlfile, 'r') as xmltree:
+        gamelistcon = xml.etree.ElementTree.fromstringlist(xmltree)
+        for num in range(10):
+            for game in gamelistcon.iter(f'icon{num}_para'):
+                gamelist.append(game.attrib)
+gamelist.sort(key=lambda x: x['name'])
+gamelistcount = len(gamelist)
+
+#manage all games
+filecount = 1
+gamecount = 0
+for game in gamelist:
+
+    #init outfilexml
+    if gamecount % 500 == 0:
+        pagecount = 1
+        itemcount = 0
+        outfilexml = '<?xml version="1.0" encoding="utf-8"?>\r\n<strings_resources>\r\n'
+        outfilexml = outfilexml + f'  <icon_para game_list_total="{gamelistcount}"/>\r\n'
+
+    #page outfilexml
+    if itemcount == 0:
+        outfilexml = outfilexml + f'  <icon_page{pagecount}>\r\n'
+    outfilexml = outfilexml + '      <icon' + str(itemcount) + '_para id="' + game['id'] + '" name="' + game['name'] + '" game_path="' + game['game_path'] + '"/>\r\n'
+    if itemcount == 9 or game == gamelist[-1]:
+        outfilexml = outfilexml + f'  </icon_page{pagecount}>\r\n'
+        itemcount = -1
+        pagecount +=1
+    itemcount +=1
+
+    if (gamecount + 1) % 500 == 0 or game == gamelist[-1]:
+        # end outfilexml
+        outfilexml = outfilexml + '</strings_resources>'
+
+        #save outfilexml
+        with open(f'tf_all/settings/res/ALL/string/game_strings_en_part{filecount}.xml', 'w') as xmlfile:
+            xmlfile.write(outfilexml)
+        filecount +=1
+    gamecount +=1
