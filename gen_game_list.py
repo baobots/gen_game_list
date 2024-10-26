@@ -2,7 +2,7 @@ import os, shutil, itertools, xml.etree.ElementTree, re
 from pathlib import Path
 from PIL import Image
 from urllib.request import urlretrieve
-'''
+
 #set vars
 romsfolder = ''
 imagesfolder = ''
@@ -125,7 +125,7 @@ print ()
 print (f'Console {console} are done')
 with open(f'tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml', 'w') as xmlfile:
     xmlfile.write(outfilexml)
-'''
+
 #create xml fot all game
 shutil.rmtree('tf_all', ignore_errors=True)
 os.makedirs('tf_all/settings/res/ALL/string/')
