@@ -8,17 +8,18 @@ romsfolder = ''
 imagesfolder = ''
 console = 'neogeo'
 
-# CPS – Capcom
-# FBA – Final Burn Alpha
-# FC – Famicom / NES
-# GB – Game Boy
-# GBA – Game Boy Advance
-# GBC – Game Boy Color
-# GG – Game Gear
-# MD – Mega Drive
-# NEOGEO
-# PS – Playstation
-# SFC – Super Famicom / SNES
+# CPS - Capcom
+# FBA - Final Burn Alpha
+# FC - Famicom / NES > fceumm_libretro.so
+# GB - Game Boy > mgba_libretro.so
+# GBA - Game Boy Advance > mgba_libretro.so
+# GBC - Game Boy Color > mgba_libretro.so
+# GG - Game Gear
+# MD - Mega Drive > genesisplusgx_libretro.so
+# N64(?) - Nintendo 64 > mupen64plus_libretro.so
+# NEOGEO - Neogeo
+# PS - Playstation > pcsx_rearmed_libretro.so
+# SFC - Super Famicom / SNES > snes9x_libretro.so
 
 #init folders
 os.system('clear')
