@@ -4,8 +4,7 @@ from PIL import Image
 from urllib.request import urlretrieve
 
 #set vars
-romsfolder = ''
-imagesfolder = ''
+romsfolder = '/home/mseverin/Downloads/SSD256/Arcade_Collection/neogeo/'
 console = 'neogeo'
 
 # CPS - Capcom
@@ -23,25 +22,16 @@ console = 'neogeo'
 
 #init folders
 os.system('clear')
-start = input(f'Remove tf_{console} folder? [y/n]')
-if start != 'y':
-    print ()
-    print ('Exit')
-    quit()
-print(f'Remove tf_{console} folder')
-print ()
-shutil.rmtree(f'tf_{console}', ignore_errors=True)
-os.makedirs(f'tf_{console}/game/{console.upper()}')
-os.makedirs(f'tf_{console}/settings/res/{console.upper()}/string')
-os.makedirs(f'tf_{console}/settings/res/{console.upper()}/pic')
+console = console.upper()
+shutil.rmtree(f'tf/game/{console}', ignore_errors=True)
+shutil.rmtree(f'tf/settings/res/{console}', ignore_errors=True)
+os.makedirs(f'tf/game/{console}')
+os.makedirs(f'tf/settings/res/{console}/string')
+os.makedirs(f'tf/settings/res/{console}/pic')
 
-#init realnames and customnanes
-urlretrieve('https://raw.githubusercontent.com/RetroPie/EmulationStation/master/resources/mamenames.xml', 'mamenames.xml')
-with open('mamenames.xml', 'r+') as xmltree:
-    with open('customnames.xml') as customnames:
-        shutil.copyfileobj(customnames, xmltree)
-    xmltree = itertools.chain('<root>', xmltree, '</root>')
-    mamenamexml = xml.etree.ElementTree.fromstringlist(xmltree)
+#init realnames
+with open(f'{romsfolder}/gamelist.xml') as xmltree:
+    xmllist = xml.etree.ElementTree.fromstringlist(xmltree)
 
 #generate gamelist
 gamelist = []
@@ -49,21 +39,21 @@ reallist = []
 bioslist = []
 for romfile in os.listdir(romsfolder):
     if romfile.endswith('.zip') or romfile.endswith('.7z'):
-        mamenametag = os.path.splitext(romfile)[0]
-        realnametag = mamenamexml.find(f'.//*[mamename=\'{mamenametag}\']')
+        realnametag = xmllist.find(f'.//*[path=\'./{romfile}\']')
         if realnametag is not None:
             gamelist.append(romfile)
-            reallist.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', realnametag.find('realname').text))[:28])
+            reallist.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', realnametag.find('name').text))[:28])
         else:
             print (f'Copy bios\t> {romfile}')
             bioslist.append(romfile)
-            shutil.copy(f'{romsfolder}{romfile}', f'tf_{console}/game/{console.upper()}/')
+            shutil.copy(f'{romsfolder}{romfile}', f'tf/game/{console}/')
 gamedict = dict(zip(reallist,gamelist))
 gamedict = dict(sorted((key,value) for (key,value) in gamedict.items()))
 gamedictcount = len(gamedict)
 print ()
-print (f'Copied {len(bioslist)} bios')
-print (f'Found {gamedictcount} games')
+print (f'Copied bios\t> {len(bioslist)}')
+print (f'Games found\t> {gamedictcount}')
+print ()
 input('Press enter to continue...')
 
 #init outfilexml
@@ -79,15 +69,15 @@ for realname, gamefile in gamedict.items():
     
     #copy game
     print (f'Copy game\t> {romsfolder}{gamefile}')
-    shutil.copy(f'{romsfolder}{gamefile}', f'tf_{console}/game/{console.upper()}/')
+    shutil.copy(f'{romsfolder}{gamefile}', f'tf/game/{console}/')
 
     #find image
     gamename = os.path.splitext(gamefile)[0]
     picfile = ''
-    for picimg in Path(f'{imagesfolder}').rglob(f'{gamename}-image*'):
+    for picimg in Path(f'{romsfolder}').rglob(f'{gamename}-image*'):
         picfile = str(picimg)
     if not picfile:
-        for picfile in Path(f'{imagesfolder}').rglob(f'{gamename}-thumb*'):
+        for picfile in Path(f'{romsfolder}').rglob(f'{gamename}-thumb*'):
             picfile = str(picfile)
     
     #copy image
@@ -100,16 +90,16 @@ for realname, gamefile in gamedict.items():
         picfile = picfile.replace(".jpg", ".png")
         picjpg.save(picfile)
         print (f'Move image\t> {picfile}')
-        shutil.move(picfile, f'tf_{console}/settings/res/{console.upper()}/pic/{gamename}.png')
+        shutil.move(picfile, f'tf/settings/res/{console}/pic/{gamename}.png')
     else:
         print (f'Copy image\t> {picfile}')
-        shutil.copy(picfile, f'tf_{console}/settings/res/{console.upper()}/pic/{gamename}.png')
+        shutil.copy(picfile, f'tf/settings/res/{console}/pic/{gamename}.png')
     print ()
 
     #page outfilexml
     if itemcount == 0:
         outfilexml = outfilexml + f'  <icon_page{pagecount}>\r\n'
-    outfilexml = outfilexml + f'      <icon{str(itemcount)}_para id="{console.upper()}" name="{realname}" game_path="{gamename}.zip"/>\r\n'
+    outfilexml = outfilexml + f'      <icon{str(itemcount)}_para id="{console}" name="{realname}" game_path="{gamename}.zip"/>\r\n'
     if itemcount == 9 or realname == list(gamedict)[-1]:
         outfilexml = outfilexml + f'  </icon_page{pagecount}>\r\n'
         itemcount = -1
@@ -121,15 +111,16 @@ outfilexml = outfilexml + '</strings_resources>'
 
 #save outfilexml
 print (f'No image games\t> {picnotfound}')
-print (f'Save config\t> tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml')
 print ()
+print (f'Save config\t> tf/settings/res/{console}/string/game_strings_en.xml')
 print (f'Console {console} are done')
-with open(f'tf_{console}/settings/res/{console.upper()}/string/game_strings_en.xml', 'w') as xmlfile:
+print ()
+with open(f'tf/settings/res/{console}/string/game_strings_en.xml', 'w') as xmlfile:
     xmlfile.write(outfilexml)
 
 #create xml fot all game
-shutil.rmtree('tf_all', ignore_errors=True)
-os.makedirs('tf_all/settings/res/ALL/string/')
+shutil.rmtree('tf/settings/res/ALL', ignore_errors=True)
+os.makedirs('tf/settings/res/ALL/string/')
 
 #get game from xml
 xmlfile = ''
@@ -170,7 +161,9 @@ for game in gamelist:
         outfilexml = outfilexml + '</strings_resources>'
 
         #save outfilexml
-        with open(f'tf_all/settings/res/ALL/string/game_strings_en_part{filecount}.xml', 'w') as xmlfile:
+        print (f'Save config\t> tf/settings/res/ALL/string/game_strings_en.xml')
+        print (f'Console ALL are done')
+        with open(f'tf/settings/res/ALL/string/game_strings_en_part{filecount}.xml', 'w') as xmlfile:
             xmlfile.write(outfilexml)
         filecount +=1
     gamecount +=1
