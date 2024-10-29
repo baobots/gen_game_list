@@ -4,8 +4,8 @@ from PIL import Image
 from urllib.request import urlretrieve
 
 #set vars
-romsfolder = '/home/mseverin/Downloads/SSD256/Arcade_Collection/neogeo/'
-console = 'neogeo'
+romsfolder = ''
+console = ''
 
 # CPS - Capcom
 # FBA - Final Burn Alpha
