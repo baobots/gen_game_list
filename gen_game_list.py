@@ -17,6 +17,7 @@ from PIL import Image
 # megadrive.zip
 # neogeo.zip
 # nes.zip
+# snes.zip
 
 #console type
 # CPS - Capcom
@@ -27,7 +28,6 @@ from PIL import Image
 # GBC - Game Boy Color > mgba_libretro.so
 # GG - Game Gear
 # MD - Mega Drive > genesisplusgx_libretro.so
-# N64(?) - Nintendo 64 > mupen64plus_libretro.so
 # NEOGEO - Neogeo
 # PS - Playstation > pcsx_rearmed_libretro.so
 # SFC - Super Famicom / SNES > snes9x_libretro.so
@@ -35,7 +35,7 @@ from PIL import Image
 #set vars
 console = ''
 roms_folder = ''
-roms_extensions = ['.7z', '.gg', '.zip']
+roms_extensions = ['.7z', '.gb', '.gba', '.gbc', '.gg', '.md', '.nes', '.smc', '.zip']
 
 #init folders
 os.system('clear')
