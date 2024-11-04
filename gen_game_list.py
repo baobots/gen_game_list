@@ -1,12 +1,24 @@
-import os, shutil, itertools, xml.etree.ElementTree, re
-from pathlib import Path
+# Third-party library to install
+# python3-pypillowfight
+
+import os, shutil, re
+import xml.etree.ElementTree as ET
 from PIL import Image
-from urllib.request import urlretrieve
 
-#set vars
-roms_folder = ''
-console = ''
+#roms type
+# A curated and scraped ROM collection - 2.0 Reupload
+# cps1.zip
+# cps2.zip
+# cps3.zip
+# gamegear.zip
+# gba.zip
+# gbc.zip
+# gb.zip
+# megadrive.zip
+# neogeo.zip
+# nes.zip
 
+#console type
 # CPS - Capcom
 # FBA - Final Burn Alpha
 # FC - Famicom / NES > fceumm_libretro.so
@@ -20,150 +32,174 @@ console = ''
 # PS - Playstation > pcsx_rearmed_libretro.so
 # SFC - Super Famicom / SNES > snes9x_libretro.so
 
+#set vars
+console = ''
+roms_folder = ''
+roms_extensions = ['.7z', '.gg', '.zip']
+
 #init folders
 os.system('clear')
 console = console.upper()
 shutil.rmtree(f'tf/game/{console}', ignore_errors=True)
 shutil.rmtree(f'tf/settings/res/{console}', ignore_errors=True)
+shutil.rmtree(f'tf/settings/res/ALL', ignore_errors=True)
 os.makedirs(f'tf/game/{console}')
 os.makedirs(f'tf/settings/res/{console}/string')
 os.makedirs(f'tf/settings/res/{console}/pic')
+os.makedirs(f'tf/settings/res/ALL/string')
 
-#init real names
-with open(f'{roms_folder}/gamelist.xml') as xml_tree:
-    xml_list = xml.etree.ElementTree.fromstringlist(xml_tree)
+#functions
+def normalize_under(name):
+    return re.sub(' +', '_', re.sub('[^A-Za-z0-9. ]+', '', name))
 
-#generate game list
-game_list = []
-real_list = []
-bios_list = []
+def normalize_space(name):
+    return re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', name))
+
+#step 1 - copy roms and copy/convert images or thumb
+copy_roms = 0
+copy_image = 0
+convert_image = 0
+copy_thumb = 0
+convert_thumb = 0
+image_not_found = []
 for rom_file in os.listdir(roms_folder):
-    if rom_file.endswith('.zip') or rom_file.endswith('.7z'):
-        real_name_tag = xml_list.find(f'.//*[path=\'./{rom_file}\']')
-        if real_name_tag is not None:
-            game_list.append(rom_file)
-            real_list.append(re.sub(' +', ' ', re.sub('[^A-Za-z0-9 ]+', '', real_name_tag.find('name').text))[:28])
+    if rom_file.endswith(tuple(roms_extensions)):
+        rom_name = os.path.splitext(rom_file)[0]
+        norm_file = normalize_under(rom_file)
+        norm_name = os.path.splitext(norm_file)[0]
+        #copy roms
+        copy_roms +=1
+        shutil.copy(f'{roms_folder}/{rom_file}', f'tf/game/{console}/{norm_file}')
+        #copy/convert images or thumb
+        if os.path.exists(f'{roms_folder}/images/{rom_name}-image.png'):
+            copy_image +=1
+            shutil.copy(f'{roms_folder}/images/{rom_name}-image.png', f'tf/settings/res/{console}/pic/{norm_name}.png')
+        elif os.path.exists(f'{roms_folder}/images/{rom_name}-image.jpg'):
+            convert_image +=1
+            convert_file = Image.open(f'{roms_folder}/images/{rom_name}-image.jpg')
+            convert_file.save(f'tf/settings/res/{console}/pic/{norm_name}.png')
+        elif os.path.exists(f'{roms_folder}/images/{rom_name}-thumb.png'):
+            copy_thumb +=1
+            shutil.copy(f'{roms_folder}/images/{rom_name}-thumb.png', f'tf/settings/res/{console}/pic/{norm_name}.png')
+        elif os.path.exists(f'{roms_folder}/images/{rom_name}-thumb.png'):
+            convert_thumb +=1
+            convert_file = Image.open(f'{roms_folder}/images/{rom_name}-thumb.jpg')
+            convert_file.save(f'tf/settings/res/{console}/pic/{norm_name}.png')
         else:
-            print (f'Copy bios\t> {rom_file}')
-            bios_list.append(rom_file)
-            shutil.copy(f'{roms_folder}{rom_file}', f'tf/game/{console}/')
-game_dict = dict(zip(real_list,game_list))
-game_dict = dict(sorted((key,value) for (key,value) in game_dict.items()))
-game_dict_count = len(game_dict)
+            image_not_found.append(rom_name)
+
+#print report
+print ('\033[91mReport:\033[0m')
+print (f'Roms copied: {copy_roms}')
+print (f'Images copied: {copy_image}')
+print (f'Images converted: {convert_image}')
+print (f'Thumb copied: {copy_thumb}')
+print (f'Thumb converted: {convert_thumb}')
+print (f'Images not found: {len(image_not_found)}')
 print ()
-print (f'Copied bios\t> {len(bios_list)}')
-print (f'Games found\t> {game_dict_count}')
+print ('\033[91mRoms without images:\033[0m')
+print (*image_not_found, sep='\n')
 print ()
-input('Press enter to continue...')
+input('\033[93mPress enter to continue...\033[0m')
 
-#init out file xml
-page_count = 1
-item_count = 0
-out_file_xml = '<?xml version="1.0" encoding="utf-8"?>\r\n<strings_resources>\r\n'
-out_file_xml = out_file_xml + f'  <icon_para game_list_total="{game_dict_count}"/>\r\n'
+#step 2 - create dictionary name and check file match
+os.system('clear')
+xml_tree_game = ET.parse(f'{roms_folder}/gamelist.xml')
+xml_root_game = xml_tree_game.getroot()
 
-#manage game
-pic_not_found = 0
-for real_name, game_file in game_dict.items():
-    print (f'Manage game\t> {real_name}')
-    
-    #copy game
-    print (f'Copy game\t> {roms_folder}{game_file}')
-    shutil.copy(f'{roms_folder}{game_file}', f'tf/game/{console}/')
-
-    #find image
-    game_name = os.path.splitext(game_file)[0]
-    pic_file = ''
-    for pic_img in Path(f'{roms_folder}').rglob(f'{game_name}-image*'):
-        pic_file = str(pic_img)
-    if not pic_file:
-        for pic_file in Path(f'{roms_folder}').rglob(f'{game_name}-thumb*'):
-            pic_file = str(pic_file)
-    
-    #copy image
-    if not pic_file:
-        print ('\x1b[0;31;40m' + 'No image' + '\x1b[0m')
-        pic_not_found +=1
-    elif 'jpg' in pic_file:
-        print (f'Convert image\t> {pic_file}')
-        pic_jpg = Image.open(pic_file)
-        pic_file = pic_file.replace(".jpg", ".png")
-        pic_jpg.save(pic_file)
-        print (f'Move image\t> {pic_file}')
-        shutil.move(pic_file, f'tf/settings/res/{console}/pic/{game_name}.png')
+#create dictionary roms : name
+game_dict = {}
+roms_not_found = []
+for game in xml_root_game.findall('./game'):
+    norm_file = normalize_under(re.sub('./','', game[0].text))
+    if os.path.exists(f'tf/game/{console}/{norm_file}'):
+        norm_name = normalize_space(game[1].text)[:28]
+        game_dict[norm_file] = norm_name
     else:
-        print (f'Copy image\t> {pic_file}')
-        shutil.copy(pic_file, f'tf/settings/res/{console}/pic/{game_name}.png')
-    print ()
+        roms_not_found.append(norm_file)
+game_dict = dict(sorted(game_dict.items(), key = lambda item: item[1]))
+game_dict_count = len(game_dict)
 
-    #page out_file_xml
+#check file to dict match
+names_not_found = []
+for rom_file in os.listdir(f'tf/game/{console}'):
+    if game_dict.get(rom_file) is None:
+        names_not_found.append(rom_file)
+
+#print report
+print ('\033[91mReport:\033[0m')
+print (f'Roms matched: {game_dict_count}')
+print (f'Names not found: {len(names_not_found)}')
+print (f'Roms not found: {len(roms_not_found)}')
+print ()
+print ('\033[91mRoms without name:\033[0m')
+print (*names_not_found, sep='\n')
+print ()
+print ('\033[91mNames without rom:\033[0m')
+print (*roms_not_found, sep='\n')
+print ()
+input('\033[93mPress enter to continue...\033[0m')
+
+#step 3 - create xml from dictionary
+os.system('clear')
+xml_root_strings = ET.Element('strings_resources')
+ET.SubElement(xml_root_strings, 'icon_para', game_list_total = f'{game_dict_count}')
+
+#from dictionary to xml entry
+item_count = 0
+page_count = 1
+for game_key in game_dict:
+    game_value = game_dict.get(game_key)
     if item_count == 0:
-        out_file_xml = out_file_xml + f'  <icon_page{page_count}>\r\n'
-    out_file_xml = out_file_xml + f'      <icon{str(item_count)}_para id="{console}" name="{real_name}" game_path="{game_name}.zip"/>\r\n'
-    if item_count == 9 or real_name == list(game_dict)[-1]:
-        out_file_xml = out_file_xml + f'  </icon_page{page_count}>\r\n'
-        item_count = -1
-        page_count +=1
+        xml_page_strings = ET.SubElement(xml_root_strings, f'icon_page{page_count}')
+    ET.SubElement(xml_page_strings, f'icon{item_count}_para', id = console, name = game_value, game_path = game_key)
     item_count +=1
-
-# end out_file_xml
-out_file_xml = out_file_xml + '</strings_resources>'
-
-#save out_file_xml
-print (f'No image games\t> {pic_not_found}')
-print ()
-print (f'Save config\t> tf/settings/res/{console}/string/game_strings_en.xml')
-print (f'Console {console} are done')
-print ()
-with open(f'tf/settings/res/{console}/string/game_strings_en.xml', 'w') as xml_file:
-    xml_file.write(out_file_xml)
-
-#create xml fot all game
-shutil.rmtree('tf/settings/res/ALL', ignore_errors=True)
-os.makedirs('tf/settings/res/ALL/string/')
-
-#get game from xml
-xml_file = ''
-game_list = []
-for xml_file in Path('./').rglob('*strings*.xml'):
-    with open(xml_file, 'r') as xml_tree:
-        game_list_console = xml.etree.ElementTree.fromstringlist(xml_tree)
-        for num in range(10):
-            for game in game_list_console.iter(f'icon{num}_para'):
-                game_list.append(game.attrib)
-game_list.sort(key=lambda x: x['name'])
-game_list_count = len(game_list)
-
-#manage all games
-file_count = 1
-game_count = 0
-for game in game_list:
-
-    #init out file xml
-    if game_count % 500 == 0:
-        page_count = 1
+    if item_count == 10:
         item_count = 0
-        out_file_xml = '<?xml version="1.0" encoding="utf-8"?>\r\n<strings_resources>\r\n'
-        out_file_xml = out_file_xml + f'  <icon_para game_list_total="{game_list_count}"/>\r\n'
-
-    #page out file xml
-    if item_count == 0:
-        out_file_xml = out_file_xml + f'  <icon_page{page_count}>\r\n'
-    out_file_xml = out_file_xml + '      <icon' + str(item_count) + '_para id="' + game['id'] + '" name="' + game['name'] + '" game_path="' + game['game_path'] + '"/>\r\n'
-    if item_count == 9 or game == game_list[-1]:
-        out_file_xml = out_file_xml + f'  </icon_page{page_count}>\r\n'
-        item_count = -1
         page_count +=1
+
+#print report
+print ('\033[91mReport:\033[0m')
+print (f'Saved xml for {console}: tf/settings/res/{console}/string/game_strings_en.xml')
+xml_tree_strings = ET.ElementTree(xml_root_strings)
+ET.indent(xml_tree_strings, '\t')
+xml_tree_strings.write(f'tf/settings/res/{console}/string/game_strings_en.xml', xml_declaration = True, encoding = 'utf-8')
+
+#step 4 - create global dictionary from all xml files
+game_dict = {}
+for console_dir in os.listdir('tf/settings/res/'):
+    if os.path.exists(f'tf/settings/res/{console_dir}/string/game_strings_en.xml'):
+        xml_tree_game = ET.parse(f'tf/settings/res/{console_dir}/string/game_strings_en.xml')
+        xml_root_game = xml_tree_game.getroot()
+        for game in xml_root_game.findall('.//*[@game_path]'):
+            game_dict[game.attrib['game_path']] = game.attrib['name']
+game_dict = dict(sorted(game_dict.items(), key = lambda item: item[1]))
+game_dict_count = len(game_dict)
+
+#from dictionary to xml entry in 500 group
+item_count = 0
+item_global_count = 0
+page_count = 1
+file_count = 0
+for game_key in game_dict:
+    game_value = game_dict.get(game_key)
+    if item_global_count % 500 == 0:
+        xml_root_strings = ET.Element('strings_resources')
+        ET.SubElement(xml_root_strings, 'icon_para', game_list_total = f'{game_dict_count}')
+        item_count = 0
+        page_count = 1
+    if item_count == 0:
+        xml_page_strings = ET.SubElement(xml_root_strings, f'icon_page{page_count}')
+    ET.SubElement(xml_page_strings, f'icon{item_count}_para', id = console, name = game_value, game_path = game_key)
     item_count +=1
-
-    if (game_count + 1) % 500 == 0 or game == game_list[-1]:
-        # end out file xml
-        out_file_xml = out_file_xml + '</strings_resources>'
-
-        #save out file xml
-        print (f'Save config\t> tf/settings/res/ALL/string/game_strings_en.xml')
-        print (f'Console ALL are done')
-        with open(f'tf/settings/res/ALL/string/game_strings_en_part{file_count}.xml', 'w') as xml_file:
-            xml_file.write(out_file_xml)
+    if item_count == 10:
+        item_count = 0
+        page_count +=1
+    if (item_global_count + 1) % 500 == 0 or game_key == list(game_dict)[-1]:
+        print (f'Saved xml for ALL: tf/settings/res/ALL/string/game_strings_en_part{file_count}.xml')
+        xml_tree_strings = ET.ElementTree(xml_root_strings)
+        ET.indent(xml_tree_strings, '\t')
+        xml_tree_strings.write(f'tf/settings/res/ALL/string/game_strings_en_part{file_count}.xml', xml_declaration = True, encoding = 'utf-8')
         file_count +=1
-    game_count +=1
+    item_global_count +=1
+print ()
